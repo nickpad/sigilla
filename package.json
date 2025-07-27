@@ -16,5 +16,8 @@
     "devDependencies": {
         "tsdown": "^0.13.0",
         "vitest": "^3.2.4"
+    },
+    "dependencies": {
+        "zod": "~4.0.0"
     }
 }
