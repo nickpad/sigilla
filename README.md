@@ -1,7 +1,7 @@
 # Sigilla
 
-![Logo](docs/logo.png)
+![Logo](docs/logo-small.png)
 
 _Form validation with the stamp of correctness_
 
-**A form handling and validation library that pairs well with React Router 7. Focused on type-safety and simplicity.**
+**A form validation library that pairs well with React Router 7. Focused on type-safety and simplicity.**
