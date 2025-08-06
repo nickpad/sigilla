@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { z } from "zod/v4";
-import { createForm } from "~/lib/form";
+import { createForm } from "../src";
 
 describe("createForm", () => {
   describe("with a simple login schema", () => {
