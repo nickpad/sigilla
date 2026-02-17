@@ -1,6 +1,6 @@
 # Sigilla
 
-![Logo](docs/logo-small.png)
+![Logo](docs/logo.png)
 
 _Form validation with the stamp of correctness_
 
