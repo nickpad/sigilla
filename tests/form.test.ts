@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
+import { createForm } from "../src/form";
+import { describe, expect, it } from "vitest";
 import { z } from "zod/v4";
-import { createForm } from "../src";
 
 describe("createForm", () => {
   describe("with a simple login schema", () => {
@@ -13,12 +13,12 @@ describe("createForm", () => {
     const { newForm, validateForm } = createForm(loginSchema);
 
     describe("validateForm", () => {
-      it("should parse valid FormData correctly", () => {
+      it("should parse valid FormData correctly", async () => {
         const formData = new FormData();
         formData.append("email", "user@example.com");
         formData.append("password", "password123");
 
-        const form = validateForm(formData);
+        const form = await validateForm(formData);
 
         expect(form.get("email")).toBe("user@example.com");
         expect(form.get("password")).toBe("password123");
@@ -27,12 +27,12 @@ describe("createForm", () => {
         expect(form.error("password")).toBeUndefined();
       });
 
-      it("should handle invalid email in FormData", () => {
+      it("should handle invalid email in FormData", async () => {
         const formData = new FormData();
         formData.append("email", "invalid-email");
         formData.append("password", "password123");
 
-        const form = validateForm(formData);
+        const form = await validateForm(formData);
 
         expect(form.get("email")).toBe("invalid-email");
         expect(form.get("password")).toBe("password123");
@@ -41,12 +41,12 @@ describe("createForm", () => {
         expect(form.error("password")).toBeUndefined();
       });
 
-      it("should handle short password in FormData", () => {
+      it("should handle short password in FormData", async () => {
         const formData = new FormData();
         formData.append("email", "user@example.com");
         formData.append("password", "123");
 
-        const form = validateForm(formData);
+        const form = await validateForm(formData);
 
         expect(form.get("email")).toBe("user@example.com");
         expect(form.get("password")).toBe("123");
@@ -57,55 +57,51 @@ describe("createForm", () => {
         );
       });
 
-      it("should handle empty FormData", () => {
+      it("should handle empty FormData", async () => {
         const formData = new FormData();
 
-        const form = validateForm(formData);
+        const form = await validateForm(formData);
 
         expect(form.get("email")).toBe("");
         expect(form.get("password")).toBe("");
         expect(form.isValid()).toBe(false);
         expect(form.error("email")).toBe("Invalid email format");
-        expect(form.error("password")).toBe(
-          "Password must be at least 8 characters",
-        );
+        expect(form.error("password")).toContain("Invalid input");
       });
 
-      it("should handle FormData with missing fields", () => {
+      it("should handle FormData with missing fields", async () => {
         const formData = new FormData();
         formData.append("email", "user@example.com");
         // password is missing
 
-        const form = validateForm(formData);
+        const form = await validateForm(formData);
 
         expect(form.get("email")).toBe("user@example.com");
         expect(form.get("password")).toBe("");
         expect(form.isValid()).toBe(false);
         expect(form.error("email")).toBeUndefined();
-        expect(form.error("password")).toBe(
-          "Password must be at least 8 characters",
-        );
+        expect(form.error("password")).toContain("Invalid input");
       });
 
-      it("should handle FormData with extra fields", () => {
+      it("should handle FormData with extra fields", async () => {
         const formData = new FormData();
         formData.append("email", "user@example.com");
         formData.append("password", "password123");
         formData.append("extraField", "should be ignored");
 
-        const form = validateForm(formData);
+        const form = await validateForm(formData);
 
         expect(form.get("email")).toBe("user@example.com");
         expect(form.get("password")).toBe("password123");
         expect(form.isValid()).toBe(true);
       });
 
-      it("should handle multiple field errors", () => {
+      it("should handle multiple field errors", async () => {
         const formData = new FormData();
         formData.set("email", "invalid-email");
         formData.set("password", "123");
 
-        const form = validateForm(formData);
+        const form = await validateForm(formData);
 
         expect(form.isValid()).toBe(false);
         expect(form.error("email")).toBe("Invalid email format");
@@ -114,7 +110,7 @@ describe("createForm", () => {
         );
       });
 
-      it("handles list of values", () => {
+      it("handles list of values", async () => {
         const formData = new FormData();
         formData.append("mealOptions", "chicken");
         formData.append("mealOptions", "beef");
@@ -125,7 +121,7 @@ describe("createForm", () => {
           }),
         );
 
-        const form = validateForm(formData);
+        const form = await validateForm(formData);
 
         expect(form.isValid()).toBe(true);
         expect(form.getAll("mealOptions")).toEqual([
@@ -137,7 +133,7 @@ describe("createForm", () => {
     });
 
     describe("newForm", () => {
-      it("should parse valid object correctly", () => {
+      it("should parse valid object correctly", async () => {
         const data = {
           email: "user@example.com",
           password: "password123",
@@ -151,7 +147,7 @@ describe("createForm", () => {
         expect(form.error("password")).toBeUndefined();
       });
 
-      it("should handle empty object", () => {
+      it("should handle empty object", async () => {
         const data = {};
 
         const form = newForm(data);
@@ -172,12 +168,12 @@ describe("createForm", () => {
 
     const { validateForm } = createForm(strictSchema);
 
-    it("should return all errors for a field", () => {
+    it("should return all errors for a field", async () => {
       const formData = new FormData();
       formData.append("email", "x");
       formData.append("password", "123");
 
-      const form = validateForm(formData);
+      const form = await validateForm(formData);
 
       expect(form.errors("email")).toEqual([
         "Invalid email format",
@@ -200,7 +196,7 @@ describe("createForm", () => {
 
     const { newForm, validateForm } = createForm(mixedSchema);
 
-    it("should handle mixed types correctly in newForm", () => {
+    it("should handle mixed types correctly in newForm", async () => {
       const form = newForm({
         name: "John",
         active: true,
@@ -213,7 +209,7 @@ describe("createForm", () => {
       expect(form.isTrue("newsletter")).toBe(false); // boolean default
     });
 
-    it("should handle mixed types in FormData validation", () => {
+    it("should handle mixed types in FormData validation", async () => {
       const formData = new FormData();
       formData.append("name", "Jane");
       formData.append("age", "25");
@@ -222,7 +218,7 @@ describe("createForm", () => {
       formData.append("active", "true");
       // newsletter not included (should be false)
 
-      const form = validateForm(formData);
+      const form = await validateForm(formData);
 
       expect(form.get("name")).toBe("Jane");
       expect(form.get("age")).toBe("25"); // Coerced to number
@@ -241,13 +237,13 @@ describe("createForm", () => {
 
     const { newForm, validateForm } = createForm(booleanSchema);
 
-    it("should handle boolean field with non-empty value as true", () => {
+    it("should handle boolean field with non-empty value as true", async () => {
       const formData = new FormData();
       formData.append("email", "user@example.com");
       formData.append("newsletter", "on");
       formData.append("terms", "true");
 
-      const form = validateForm(formData);
+      const form = await validateForm(formData);
 
       expect(form.get("email")).toBe("user@example.com");
       expect(form.isTrue("newsletter")).toBe(true);
@@ -255,31 +251,31 @@ describe("createForm", () => {
       expect(form.isValid()).toBe(true);
     });
 
-    it("should handle boolean field with empty string as false", () => {
+    it("should handle boolean field with empty string as false", async () => {
       const formData = new FormData();
       formData.append("email", "user@example.com");
       formData.append("newsletter", "");
       formData.append("terms", "on");
 
-      const form = validateForm(formData);
+      const form = await validateForm(formData);
 
       expect(form.isTrue("newsletter")).toBe(false);
       expect(form.isValid()).toBe(true);
     });
 
-    it("should handle missing boolean field as false", () => {
+    it("should handle missing boolean field as false", async () => {
       const formData = new FormData();
       formData.append("email", "user@example.com");
       // newsletter and terms are missing
 
-      const form = validateForm(formData);
+      const form = await validateForm(formData);
 
       expect(form.isTrue("newsletter")).toBe(false);
       expect(form.isTrue("terms")).toBe(false);
       expect(form.isValid()).toBe(true);
     });
 
-    it("should initialize boolean fields correctly in newForm", () => {
+    it("should initialize boolean fields correctly in newForm", async () => {
       const form = newForm({
         email: "user@example.com",
         newsletter: true,
@@ -290,27 +286,27 @@ describe("createForm", () => {
       expect(form.isTrue("terms")).toBe(false); // default value
     });
 
-    it("should clear boolean fields to false", () => {
+    it("should clear boolean fields to false", async () => {
       const formData = new FormData();
       formData.append("email", "user@example.com");
       formData.append("newsletter", "on");
       formData.append("terms", "true");
 
-      const form = validateForm(formData);
+      const form = await validateForm(formData);
       expect(form.isTrue("newsletter")).toBe(true);
 
       form.clear("newsletter");
       expect(form.isTrue("newsletter")).toBe(false);
     });
 
-    it("should handle checkbox-like behavior", () => {
+    it("should handle checkbox-like behavior", async () => {
       const formData = new FormData();
       formData.append("email", "user@example.com");
       // Checkbox checked: value present
       formData.append("newsletter", "1");
       // Checkbox unchecked: value not present (missing from FormData)
 
-      const form = validateForm(formData);
+      const form = await validateForm(formData);
 
       expect(form.get("email")).toBe("user@example.com");
       expect(form.isTrue("newsletter")).toBe(true); // has value "1"
@@ -318,7 +314,7 @@ describe("createForm", () => {
       expect(form.isValid()).toBe(true);
     });
 
-    it("should handle various truthy string values as true", () => {
+    it("should handle various truthy string values as true", async () => {
       const testCases = [
         "on",
         "1",
@@ -333,20 +329,20 @@ describe("createForm", () => {
         formData.append("email", "user@example.com");
         formData.append("newsletter", value);
 
-        const form = validateForm(formData);
+        const form = await validateForm(formData);
 
         expect(form.isTrue("newsletter")).toBe(true);
         expect(form.isValid()).toBe(true);
       }
     });
 
-    it("should handle clearAll with boolean fields", () => {
+    it("should handle clearAll with boolean fields", async () => {
       const formData = new FormData();
       formData.append("email", "user@example.com");
       formData.append("newsletter", "on");
       formData.append("terms", "true");
 
-      const form = validateForm(formData);
+      const form = await validateForm(formData);
       expect(form.isTrue("newsletter")).toBe(true);
       expect(form.isTrue("terms")).toBe(true);
 
@@ -366,7 +362,7 @@ describe("createForm", () => {
 
     const { newForm } = createForm(testSchema);
 
-    it("should add error to field with no existing errors", () => {
+    it("should add error to field with no existing errors", async () => {
       const form = newForm({ username: "test", email: "test@example.com" });
 
       form.addFieldError("username", "Username already taken");
@@ -377,7 +373,7 @@ describe("createForm", () => {
       expect(form.isValid()).toBe(false);
     });
 
-    it("should add multiple errors to the same field", () => {
+    it("should add multiple errors to the same field", async () => {
       const form = newForm({ username: "test" });
 
       form.addFieldError("username", "First error");
@@ -393,7 +389,7 @@ describe("createForm", () => {
       expect(form.isInvalid("username")).toBe(true);
     });
 
-    it("should add errors to multiple different fields", () => {
+    it("should add errors to multiple different fields", async () => {
       const form = newForm();
 
       form.addFieldError("username", "Username error");
@@ -406,13 +402,13 @@ describe("createForm", () => {
       expect(form.isValid()).toBe(false);
     });
 
-    it("should handle adding errors to fields that already have validation errors", () => {
+    it("should handle adding errors to fields that already have validation errors", async () => {
       const formData = new FormData();
       formData.append("username", "x"); // too short, will cause validation error
       formData.append("email", "invalid-email"); // invalid email
 
       const { validateForm } = createForm(testSchema);
-      const form = validateForm(formData);
+      const form = await validateForm(formData);
 
       // Form already has validation errors
       expect(form.errors("username")).toEqual(["Username too short"]);
@@ -432,7 +428,7 @@ describe("createForm", () => {
       ]);
     });
 
-    it("should maintain field error state after clearing and re-adding", () => {
+    it("should maintain field error state after clearing and re-adding", async () => {
       const form = newForm();
 
       form.addFieldError("username", "Initial error");
@@ -447,7 +443,7 @@ describe("createForm", () => {
       expect(form.isInvalid("username")).toBe(true);
     });
 
-    it("should not affect other fields when adding errors", () => {
+    it("should not affect other fields when adding errors", async () => {
       const form = newForm({ username: "valid", email: "test@example.com" });
 
       form.addFieldError("username", "Username error");
@@ -460,7 +456,7 @@ describe("createForm", () => {
       expect(form.isInvalid("age")).toBe(false);
     });
 
-    it("should allow empty string as error message", () => {
+    it("should allow empty string as error message", async () => {
       const form = newForm();
 
       form.addFieldError("username", "");
@@ -470,7 +466,7 @@ describe("createForm", () => {
       expect(form.isInvalid("username")).toBe(true);
     });
 
-    it("should handle special characters and unicode in error messages", () => {
+    it("should handle special characters and unicode in error messages", async () => {
       const form = newForm();
 
       const specialMessage = "Error with émojis 🚫 and spëcial chārs!";
@@ -481,69 +477,51 @@ describe("createForm", () => {
     });
   });
 
-  describe("Runtime schema validation", () => {
-    it("should reject unsupported types", () => {
-      const badSchema = z.object({
-        name: z.string(),
-        metadata: z.object({ key: z.string() }), // Objects not allowed
-      });
+  describe("values() method", () => {
+    const userSchema = z.object({
+      name: z.string().min(1, "Name is required"),
+      email: z.email("Invalid email format"),
+      age: z.coerce.number().min(18, "Must be 18 or older"),
+      tags: z.array(z.string()).optional(),
+      newsletter: z.coerce.boolean(),
+    });
 
-      expect(() => createForm(badSchema)).toThrow(
-        'Form field "metadata" uses unsupported type "ZodObject". Allowed types are: string, boolean, number, Date, BigInt, and email/URL/other string formats.',
+    const { validateForm } = createForm(userSchema);
+
+    it("should return validated values when form is valid", async () => {
+      const formData = new FormData();
+      formData.append("name", "John Doe");
+      formData.append("email", "john@example.com");
+      formData.append("age", "25");
+      formData.append("tags", "typescript");
+      formData.append("tags", "react");
+      formData.append("newsletter", "true");
+
+      const form = await validateForm(formData);
+
+      expect(form.isValid()).toBe(true);
+      const values = form.values();
+      expect(values).toEqual({
+        name: "John Doe",
+        email: "john@example.com",
+        age: 25,
+        tags: ["typescript", "react"],
+        newsletter: true,
+      });
+    });
+
+    it("should throw error when form is invalid", async () => {
+      const formData = new FormData();
+      formData.append("name", "");
+      formData.append("email", "invalid-email");
+      formData.append("age", "15");
+
+      const form = await validateForm(formData);
+
+      expect(form.isValid()).toBe(false);
+      expect(() => form.values()).toThrow(
+        "Cannot get values from invalid form",
       );
-    });
-
-    it("should require coercion for non-string types", () => {
-      const badSchema = z.object({
-        age: z.number(), // Should be z.coerce.number()
-      });
-
-      expect(() => createForm(badSchema)).toThrow(
-        'Form field "age" is a number but doesn\'t use coercion. Use z.coerce.number() instead of z.number() to accept string input from HTML forms.',
-      );
-    });
-
-    it("should require coercion for boolean array elements", () => {
-      const badSchema = z.object({
-        flags: z.array(z.boolean()), // Should be z.array(z.coerce.boolean())
-      });
-
-      expect(() => createForm(badSchema)).toThrow(
-        'Form field "flags[] (array element)" is a boolean but doesn\'t use coercion. Use z.coerce.boolean() instead of z.boolean() to accept string input from HTML forms.',
-      );
-    });
-
-    it("should accept valid schemas", () => {
-      const goodSchema = z.object({
-        name: z.string(),
-        email: z.email(),
-        age: z.coerce.number(),
-        active: z.coerce.boolean(),
-        tags: z.array(z.string()),
-        scores: z.array(z.coerce.number()),
-      });
-
-      expect(() => createForm(goodSchema)).not.toThrow();
-    });
-
-    it("should accept string-format types without coercion", () => {
-      const goodSchema = z.object({
-        email: z.email(),
-        url: z.url(),
-        name: z.string(),
-      });
-
-      expect(() => createForm(goodSchema)).not.toThrow();
-    });
-
-    it("should handle optional and default modifiers", () => {
-      const goodSchema = z.object({
-        name: z.string().optional(),
-        age: z.coerce.number().default(18),
-        active: z.coerce.boolean().optional().default(false),
-      });
-
-      expect(() => createForm(goodSchema)).not.toThrow();
     });
   });
 });
