@@ -1,6 +1,6 @@
 # Sigilla
 
-![Logo](docs/logo.png)
+<img src="docs/logo.png" alt="Sigilla logo" width="200">
 
 _Form validation with the stamp of correctness_
 
