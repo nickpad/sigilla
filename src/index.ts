@@ -1,3 +1,3 @@
-import { createForm } from "./form"
+import { createForm } from "./form";
 
-export { createForm }
+export { createForm };

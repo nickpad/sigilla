@@ -88,4 +88,4 @@ function validateBaseFieldType(
   }
 }
 
-export { validateSchemaCompatibility }
+export { validateSchemaCompatibility };

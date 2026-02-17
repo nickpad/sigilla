@@ -15,7 +15,7 @@
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
     "skipLibCheck": true,
-    "declarationMap": true,
+    "declarationMap": true
   },
   "include": ["src"]
 }
