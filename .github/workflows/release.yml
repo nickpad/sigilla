@@ -2,6 +2,7 @@ name: Release
 
 permissions:
   contents: write
+  id-token: write
 
 on:
   push:
@@ -16,11 +17,45 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set node
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4.1.0
+
+      - name: Set node LTS
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
+          cache: pnpm
+          registry-url: "https://registry.npmjs.org"
 
-      - run: npx changelogithub
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify tag matches package version
+        run: |
+          PKG_VERSION="v$(node -p "require('./package.json').version")"
+          if [ "$PKG_VERSION" != "${GITHUB_REF_NAME}" ]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match package version ${PKG_VERSION}"
+            exit 1
+          fi
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Typecheck
+        run: pnpm run typecheck
+
+      - name: Test
+        run: pnpm run test
+
+      - name: Publish to npm
+        run: pnpm publish --access public --no-git-checks --provenance
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub release
+        run: gh release create "${GITHUB_REF_NAME}" --generate-notes --verify-tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
