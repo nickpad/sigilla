@@ -10,10 +10,21 @@ _Form validation with the stamp of correctness_
 
 Releases publish to npm from GitHub Actions when a version tag is pushed.
 
-1. Add repository secret `NPM_TOKEN` (npm automation token with publish access).
-2. Bump `package.json` version.
-3. Commit the version change.
-4. Tag and push:
+### One-time npm trusted publishing setup (OIDC)
+
+1. On npm, open package settings for `sigilla` and enable Trusted Publisher.
+2. Configure publisher:
+   - Owner: `nickpad`
+   - Repository: `sigilla`
+   - Workflow file: `.github/workflows/release.yml`
+   - Environment: leave empty (unless you later add a GitHub environment gate)
+3. No `NPM_TOKEN` GitHub secret is needed.
+
+### Release steps
+
+1. Bump `package.json` version.
+2. Commit the version change.
+3. Tag and push:
 
 ```bash
 git tag v0.0.1
