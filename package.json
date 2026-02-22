@@ -33,8 +33,7 @@
     "test": "vitest",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint",
-    "lint:fix": "oxlint --fix",
-    "release": "bumpp && npm publish"
+    "lint:fix": "oxlint --fix"
   },
   "packageManager": "pnpm@10.12.1",
   "devDependencies": {
